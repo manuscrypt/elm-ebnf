@@ -1,10 +1,6 @@
 module Types exposing (..)
 
 
-type alias Identifier =
-    String
-
-
 type Rhs
     = Identifier String
     | Terminal String
@@ -12,6 +8,7 @@ type Rhs
     | Repetition Rhs
     | Grouping Rhs
     | Alternation Rhs Rhs
+    | Concatenation Rhs Rhs
 
 
 type alias Rule =

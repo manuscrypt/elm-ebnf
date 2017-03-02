@@ -12,6 +12,16 @@ keySymbols =
     Set.fromList [ "=", ",", ";", "|", "-" ]
 
 
+singleQuote : Parser ()
+singleQuote =
+    keyword "'"
+
+
+doubleQuote : Parser ()
+doubleQuote =
+    keyword "\""
+
+
 noKeywords : Set.Set comparable
 noKeywords =
     Set.fromList []
@@ -29,12 +39,18 @@ rule =
     succeed Rule
         |= identifier
         |. spaces
-        |. symbol "="
+        |. keyword "="
         |. spaces
-        |= rhs
+        |= lazy (\_ -> rhs)
         |. spaces
-        |. symbol ";"
+        |. keyword ";"
+        |. spaces
         |. end
+
+
+identifier : Parser String
+identifier =
+    variable isLetter isLetterOrDigitOrUnderscore noKeywords
 
 
 rhs : Parser Rhs
@@ -44,47 +60,141 @@ rhs =
 
 rhsOpts : List (Parser Rhs)
 rhsOpts =
-    [ succeed Identifier |= identifier
-      -- , succeed Terminal
-      --     |= oneOf
-      --         [ quotedString "\""
-      --         , quotedString "'"
-      --         ]
-    , succeed Option |= enclosed "[" "]"
-    , succeed Repetition |= enclosed "{" "}"
-    , succeed Grouping |= enclosed "(" ")"
+    [ ident
+    , terminal
+    , option
+    , repetition
+    , grouping
     , alternation
+    , concatenation
+    , fail "no can do"
     ]
 
 
-identifier : Parser String
-identifier =
-    variable isLetter isLetterOrDigitOrUnderscore noKeywords
+ident : Parser Rhs
+ident =
+    succeed Identifier |= identifier
+
+
+terminal : Parser Rhs
+terminal =
+    succeed Terminal
+        |= oneOf
+            [ singleQuotedString
+            , doubleQuotedString
+            ]
+
+
+singleQuotedString : Parser String
+singleQuotedString =
+    succeed identity
+        |. singleQuote
+        |= variable isCharacter isCharacter noKeywords
+        |. singleQuote
+
+
+doubleQuotedString : Parser String
+doubleQuotedString =
+    succeed identity
+        |. doubleQuote
+        |= variable isCharacter isCharacter noKeywords
+        |. doubleQuote
+
+
+option : Parser Rhs
+option =
+    succeed Option
+        |. keyword "["
+        |. spaces
+        |= lazy (\_ -> rhs)
+        |. spaces
+        |. keyword "]"
+
+
+repetition : Parser Rhs
+repetition =
+    succeed Repetition
+        |. keyword "{"
+        |. spaces
+        |= lazy (\_ -> rhs)
+        |. spaces
+        |. keyword "}"
+
+
+grouping : Parser Rhs
+grouping =
+    succeed Grouping
+        |. keyword "("
+        |. spaces
+        |= lazy (\_ -> rhs)
+        |. spaces
+        |. keyword ")"
+
+
+enclosedIn : String -> String -> Parser Rhs
+enclosedIn open close =
+    succeed identity
+        |. keyword open
+        |. spaces
+        |= lazy (\_ -> rhs)
+        |. nextSymbol close
+
+
+nextSymbol : String -> Parser ()
+nextSymbol sym =
+    delayedCommit spaces <|
+        succeed identity
+            |= keyword sym
+            |. spaces
 
 
 alternation : Parser Rhs
 alternation =
     succeed Alternation
-        |. spaces
+        |= lazy (\_ -> rhs)
+        |= nextRhs "|"
+
+
+concatenation : Parser Rhs
+concatenation =
+    succeed Concatenation
+        |= lazy (\_ -> rhs)
+        |= nextRhs ","
+
+
+concat : Parser ( Rhs, Rhs )
+concat =
+    Parser.succeed (,)
         |= lazy (\_ -> rhs)
         |. spaces
-        |. symbol "|"
+        |. Parser.symbol ","
         |. spaces
         |= lazy (\_ -> rhs)
+
+
+alter : Parser ( Rhs, Rhs )
+alter =
+    Parser.succeed (,)
+        |= lazy (\_ -> rhs)
         |. spaces
+        |. Parser.symbol "|"
+        |. spaces
+        |= lazy (\_ -> rhs)
 
 
-character : Parser String
-character =
-    variable isCharacter isCharacter noKeywords
+nextRhs : String -> Parser Rhs
+nextRhs sep =
+    delayedCommit spaces <|
+        succeed identity
+            |. symbol sep
+            |. spaces
+            |= lazy (\_ -> rhs)
 
 
-quotedString : String -> Parser String
-quotedString boundary =
-    succeed identity
-        |. symbol boundary
-        |= character
-        |. symbol boundary
+lazy : (() -> Parser a) -> Parser a
+lazy delayedGenerator =
+    Parser.succeed ()
+        |> andThen delayedGenerator
 
 
 nextBoundary : String -> Parser (a -> a)
@@ -92,44 +202,7 @@ nextBoundary boundary =
     delayedCommit (symbol boundary) <| succeed identity
 
 
-enclosed : String -> String -> Parser Rhs
-enclosed open close =
-    succeed identity
-        |. symbol open
-        |. spaces
-        --|= oneOf rhsOpts
-        |=
-            oneOf [ succeed Identifier |= identifier ]
-        |. symbol close
 
-
-nextSymbol : String -> Parser ()
-nextSymbol sym =
-    delayedCommit spaces <|
-        succeed identity
-            |= symbol sym
-            |. spaces
-
-
-
---|. nextSymbol close
---lazy (\_ -> rhs)
---
--- alter : Parser (a -> a)
--- alter =
---     succeed identity
---         |. lazy (\_ -> rhs)
---         |. alternation
---         |. lazy (\_ -> rhs)
---
---
---
--- conc : Parser (a -> a)
--- conc =
---     succeed identity
---         |. lazy (\_ -> rhs)
---         |. concatenation
---         |. lazy (\_ -> rhs)
 --
 -- comment =
 --    succeed Comment
