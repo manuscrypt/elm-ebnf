@@ -31,9 +31,12 @@ init =
 
 parse : Model -> Model
 parse model =
-    case run Parsers.rule model.input of
-        Ok rule ->
-            { model | grammar = Just [ rule ], err = Nothing }
+    case run Parsers.grammarParser model.input of
+        Ok grammer ->
+            { model
+                | grammar = Just grammer
+                , err = Nothing
+            }
 
         Err err ->
             { model

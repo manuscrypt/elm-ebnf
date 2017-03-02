@@ -9,6 +9,7 @@ type Rhs
     | Grouping Rhs
     | Alternation Rhs Rhs
     | Concatenation Rhs Rhs
+    | NoRhs
 
 
 type alias Rule =
