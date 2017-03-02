@@ -1,0 +1,33 @@
+var _user$project$Terminals$character = A3(
+	_elm_tools$parser$Parser_LanguageKit$variable,
+	_user$project$Symbols$isCharacter,
+	_user$project$Symbols$isCharacter,
+	_elm_lang$core$Set$fromList(
+		{ctor: '[]'}));
+var _user$project$Terminals$quotedString = function (boundary) {
+	return _elm_tools$parser$Parser_LanguageKit$sequence(
+		{start: boundary, separator: '', end: boundary, spaces: _user$project$Symbols$spaces, item: _user$project$Terminals$character, trailing: _elm_tools$parser$Parser_LanguageKit$Optional});
+};
+var _user$project$Terminals$keywords = _elm_lang$core$Set$fromList(
+	{
+		ctor: '::',
+		_0: '=',
+		_1: {
+			ctor: '::',
+			_0: ',',
+			_1: {
+				ctor: '::',
+				_0: ';',
+				_1: {
+					ctor: '::',
+					_0: '|',
+					_1: {
+						ctor: '::',
+						_0: '-',
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		}
+	});
+var _user$project$Terminals$identifier = A3(_elm_tools$parser$Parser_LanguageKit$variable, _user$project$Symbols$isLetter, _user$project$Symbols$isLetterOrDigitOrUnderscore, _user$project$Terminals$keywords);

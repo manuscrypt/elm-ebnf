@@ -1,0 +1,23 @@
+var _user$project$Types$Rule = F2(
+	function (a, b) {
+		return {lhs: a, rhs: b};
+	});
+var _user$project$Types$Alternation = F2(
+	function (a, b) {
+		return {ctor: 'Alternation', _0: a, _1: b};
+	});
+var _user$project$Types$Grouping = function (a) {
+	return {ctor: 'Grouping', _0: a};
+};
+var _user$project$Types$Repetition = function (a) {
+	return {ctor: 'Repetition', _0: a};
+};
+var _user$project$Types$Option = function (a) {
+	return {ctor: 'Option', _0: a};
+};
+var _user$project$Types$Terminal = function (a) {
+	return {ctor: 'Terminal', _0: a};
+};
+var _user$project$Types$Identifier = function (a) {
+	return {ctor: 'Identifier', _0: a};
+};

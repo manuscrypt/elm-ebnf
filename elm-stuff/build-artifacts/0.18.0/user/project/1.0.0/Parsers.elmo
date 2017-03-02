@@ -1,0 +1,174 @@
+var _user$project$Parsers$nextSymbol = function (sym) {
+	return A2(
+		_elm_tools$parser$Parser$delayedCommit,
+		_user$project$Symbols$spaces,
+		A2(
+			_elm_tools$parser$Parser_ops['|.'],
+			A2(
+				_elm_tools$parser$Parser_ops['|='],
+				_elm_tools$parser$Parser$succeed(_elm_lang$core$Basics$identity),
+				_elm_tools$parser$Parser$symbol(sym)),
+			_user$project$Symbols$spaces));
+};
+var _user$project$Parsers$nextBoundary = function (boundary) {
+	return A2(
+		_elm_tools$parser$Parser$delayedCommit,
+		_elm_tools$parser$Parser$symbol(boundary),
+		_elm_tools$parser$Parser$succeed(_elm_lang$core$Basics$identity));
+};
+var _user$project$Parsers$noKeywords = _elm_lang$core$Set$fromList(
+	{ctor: '[]'});
+var _user$project$Parsers$identifier = A3(_elm_tools$parser$Parser_LanguageKit$variable, _user$project$Symbols$isLetter, _user$project$Symbols$isLetterOrDigitOrUnderscore, _user$project$Parsers$noKeywords);
+var _user$project$Parsers$enclosed = F2(
+	function (open, close) {
+		return A2(
+			_elm_tools$parser$Parser_ops['|.'],
+			A2(
+				_elm_tools$parser$Parser_ops['|='],
+				A2(
+					_elm_tools$parser$Parser_ops['|.'],
+					A2(
+						_elm_tools$parser$Parser_ops['|.'],
+						_elm_tools$parser$Parser$succeed(_elm_lang$core$Basics$identity),
+						_elm_tools$parser$Parser$symbol(open)),
+					_user$project$Symbols$spaces),
+				_elm_tools$parser$Parser$oneOf(
+					{
+						ctor: '::',
+						_0: A2(
+							_elm_tools$parser$Parser_ops['|='],
+							_elm_tools$parser$Parser$succeed(_user$project$Types$Identifier),
+							_user$project$Parsers$identifier),
+						_1: {ctor: '[]'}
+					})),
+			_elm_tools$parser$Parser$symbol(close));
+	});
+var _user$project$Parsers$rhsOpts = {
+	ctor: '::',
+	_0: A2(
+		_elm_tools$parser$Parser_ops['|='],
+		_elm_tools$parser$Parser$succeed(_user$project$Types$Identifier),
+		_user$project$Parsers$identifier),
+	_1: {
+		ctor: '::',
+		_0: A2(
+			_elm_tools$parser$Parser_ops['|='],
+			_elm_tools$parser$Parser$succeed(_user$project$Types$Option),
+			A2(_user$project$Parsers$enclosed, '[', ']')),
+		_1: {
+			ctor: '::',
+			_0: A2(
+				_elm_tools$parser$Parser_ops['|='],
+				_elm_tools$parser$Parser$succeed(_user$project$Types$Repetition),
+				A2(_user$project$Parsers$enclosed, '{', '}')),
+			_1: {
+				ctor: '::',
+				_0: A2(
+					_elm_tools$parser$Parser_ops['|='],
+					_elm_tools$parser$Parser$succeed(_user$project$Types$Grouping),
+					A2(_user$project$Parsers$enclosed, '(', ')')),
+				_1: {
+					ctor: '::',
+					_0: _user$project$Parsers$alternation,
+					_1: {ctor: '[]'}
+				}
+			}
+		}
+	}
+};
+var _user$project$Parsers$alternation = A2(
+	_elm_tools$parser$Parser_ops['|.'],
+	A2(
+		_elm_tools$parser$Parser_ops['|='],
+		A2(
+			_elm_tools$parser$Parser_ops['|.'],
+			A2(
+				_elm_tools$parser$Parser_ops['|.'],
+				A2(
+					_elm_tools$parser$Parser_ops['|.'],
+					A2(
+						_elm_tools$parser$Parser_ops['|='],
+						A2(
+							_elm_tools$parser$Parser_ops['|.'],
+							_elm_tools$parser$Parser$succeed(_user$project$Types$Alternation),
+							_user$project$Symbols$spaces),
+						_elm_tools$parser$Parser$lazy(
+							function (_p0) {
+								return _user$project$Parsers$rhs;
+							})),
+					_user$project$Symbols$spaces),
+				_elm_tools$parser$Parser$symbol('|')),
+			_user$project$Symbols$spaces),
+		_elm_tools$parser$Parser$lazy(
+			function (_p1) {
+				return _user$project$Parsers$rhs;
+			})),
+	_user$project$Symbols$spaces);
+var _user$project$Parsers$rhs = _elm_tools$parser$Parser$oneOf(_user$project$Parsers$rhsOpts);
+var _user$project$Parsers$rule = A2(
+	_elm_tools$parser$Parser_ops['|.'],
+	A2(
+		_elm_tools$parser$Parser_ops['|.'],
+		A2(
+			_elm_tools$parser$Parser_ops['|.'],
+			A2(
+				_elm_tools$parser$Parser_ops['|='],
+				A2(
+					_elm_tools$parser$Parser_ops['|.'],
+					A2(
+						_elm_tools$parser$Parser_ops['|.'],
+						A2(
+							_elm_tools$parser$Parser_ops['|.'],
+							A2(
+								_elm_tools$parser$Parser_ops['|='],
+								_elm_tools$parser$Parser$succeed(_user$project$Types$Rule),
+								_user$project$Parsers$identifier),
+							_user$project$Symbols$spaces),
+						_elm_tools$parser$Parser$symbol('=')),
+					_user$project$Symbols$spaces),
+				_user$project$Parsers$rhs),
+			_user$project$Symbols$spaces),
+		_elm_tools$parser$Parser$symbol(';')),
+	_elm_tools$parser$Parser$end);
+var _user$project$Parsers$grammarParser = A2(
+	_elm_tools$parser$Parser_ops['|.'],
+	A2(
+		_elm_tools$parser$Parser_ops['|='],
+		_elm_tools$parser$Parser$succeed(_elm_lang$core$Basics$identity),
+		A2(_elm_tools$parser$Parser_LanguageKit$list, _user$project$Symbols$spaces, _user$project$Parsers$rule)),
+	_elm_tools$parser$Parser$end);
+var _user$project$Parsers$character = A3(_elm_tools$parser$Parser_LanguageKit$variable, _user$project$Symbols$isCharacter, _user$project$Symbols$isCharacter, _user$project$Parsers$noKeywords);
+var _user$project$Parsers$quotedString = function (boundary) {
+	return A2(
+		_elm_tools$parser$Parser_ops['|.'],
+		A2(
+			_elm_tools$parser$Parser_ops['|='],
+			A2(
+				_elm_tools$parser$Parser_ops['|.'],
+				_elm_tools$parser$Parser$succeed(_elm_lang$core$Basics$identity),
+				_elm_tools$parser$Parser$symbol(boundary)),
+			_user$project$Parsers$character),
+		_elm_tools$parser$Parser$symbol(boundary));
+};
+var _user$project$Parsers$keySymbols = _elm_lang$core$Set$fromList(
+	{
+		ctor: '::',
+		_0: '=',
+		_1: {
+			ctor: '::',
+			_0: ',',
+			_1: {
+				ctor: '::',
+				_0: ';',
+				_1: {
+					ctor: '::',
+					_0: '|',
+					_1: {
+						ctor: '::',
+						_0: '-',
+						_1: {ctor: '[]'}
+					}
+				}
+			}
+		}
+	});
