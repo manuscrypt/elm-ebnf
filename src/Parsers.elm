@@ -7,37 +7,6 @@ import Types exposing (..)
 import Set
 
 
-keySymbols : Set.Set String
-keySymbols =
-    Set.fromList [ "=", ",", ";", "|", "-" ]
-
-
-doubleQuotedString : Parser String
-doubleQuotedString =
-    variable (\c -> c == '"') (\c -> isCharacter c) (Set.fromList [])
-
-
-singleQuotedString : Parser String
-singleQuotedString =
-    variable (\c -> c == '\'') (\c -> isCharacter c) (Set.fromList [])
-
-
-identifier : Parser String
-identifier =
-    variable isLetter isLetterOrDigitOrUnderscore noKeywords
-
-
-terminal : Parser Rhs
-terminal =
-    succeed Terminal
-        |= oneOf [ singleQuotedString, doubleQuotedString ]
-
-
-noKeywords : Set.Set comparable
-noKeywords =
-    Set.fromList []
-
-
 grammarParser : Parser (List Rule)
 grammarParser =
     succeed identity
@@ -58,6 +27,22 @@ rule =
         |. keyword ";"
 
 
+identifier : Parser String
+identifier =
+    variable isLetter isLetterOrDigitOrUnderscore noKeywords
+
+
+terminal : Parser Rhs
+terminal =
+    succeed Terminal
+        |= oneOf [ singleQuotedString, doubleQuotedString ]
+
+
+noKeywords : Set.Set comparable
+noKeywords =
+    Set.fromList []
+
+
 rhs : List (Parser Rhs)
 rhs =
     [ lazy (\_ -> alternation)
@@ -68,6 +53,11 @@ rhs =
     , terminal
     , ident
     ]
+
+
+ident : Parser Rhs
+ident =
+    succeed Identifier |= identifier
 
 
 concatenation : Parser Rhs
@@ -105,42 +95,31 @@ con =
 option : Parser Rhs
 option =
     succeed Option
-        |. spaces
         |. keyword "["
         |. spaces
         |= oneOf rhs
         |. spaces
         |. keyword "]"
-        |. spaces
 
 
 grouping : Parser Rhs
 grouping =
     succeed Grouping
-        |. spaces
         |. keyword "("
         |. spaces
         |= oneOf rhs
         |. spaces
         |. keyword ")"
-        |. spaces
 
 
 repetition : Parser Rhs
 repetition =
     succeed Repetition
-        |. spaces
         |. keyword "{"
         |. spaces
         |= oneOf rhs
         |. spaces
         |. keyword "}"
-        |. spaces
-
-
-ident : Parser Rhs
-ident =
-    succeed Identifier |= identifier
 
 
 comment : Parser String -> Parser Rhs
@@ -151,6 +130,21 @@ comment c =
         |= c
         |. spaces
         |. symbol "*)"
+
+
+keySymbols : Set.Set String
+keySymbols =
+    Set.fromList [ "=", ",", ";", "|", "-" ]
+
+
+doubleQuotedString : Parser String
+doubleQuotedString =
+    variable (\c -> c == '"') (\c -> isCharacter c) (Set.fromList [])
+
+
+singleQuotedString : Parser String
+singleQuotedString =
+    variable (\c -> c == '\'') (\c -> isCharacter c) (Set.fromList [])
 
 
 
