@@ -92,7 +92,7 @@ suite =
                 \() ->
                     case Parser.run Parsers.alternation "a | b" of
                         Ok res ->
-                            Expect.equal res (Alternation (Identifier "a") (Identifier "b"))
+                            Expect.equal res (Alternate (Identifier "a") (Single (Identifier "b")))
 
                         Err err ->
                             Expect.fail <| toString err
@@ -100,7 +100,7 @@ suite =
                 \() ->
                     case Parser.run Parsers.alternation "a | b | c" of
                         Ok res ->
-                            Expect.equal (Debug.log "res" res) (Alternation (Identifier "a") (Alternation (Identifier "b") (Identifier "c")))
+                            Expect.equal (Debug.log "res" res) (Alternate (Identifier "a") (Alternate (Identifier "B") (Single (Identifier "b"))))
 
                         Err err ->
                             Expect.fail <| toString err
