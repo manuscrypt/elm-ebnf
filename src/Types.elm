@@ -4,6 +4,7 @@ module Types exposing (..)
 type Rhs
     = Identifier String
     | Terminal String
+    | Comment String
     | Option Rhs
     | Repetition Rhs
     | Grouping Rhs

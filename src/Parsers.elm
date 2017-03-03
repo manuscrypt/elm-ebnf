@@ -143,15 +143,17 @@ ident =
     succeed Identifier |= identifier
 
 
+comment : Parser String -> Parser Rhs
+comment c =
+    succeed Comment
+        |. symbol "(*"
+        |. spaces
+        |= c
+        |. spaces
+        |. symbol "*)"
 
---
--- comment =
---    succeed Comment
---          |. symbol "(*"
---          |. spaces
---          |= c
---          |. spaces
---          |. symbol "*)"
+
+
 -- special =
 --      succeed identity
 --          |. symbol "?"
