@@ -1,11 +1,6 @@
 module Types exposing (..)
 
 
-type Alternation
-    = Single Rhs
-    | Alternate Rhs Alternation
-
-
 type Rhs
     = Identifier String
     | Terminal String
@@ -13,8 +8,7 @@ type Rhs
     | Option Rhs
     | Repetition Rhs
     | Grouping Rhs
-    | Alternation
-      --| Alternation Rhs Rhs
+    | Alternation Rhs Rhs
     | Concatenation Rhs Rhs
     | NoRhs
 

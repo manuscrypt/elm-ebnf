@@ -53,7 +53,7 @@ rule =
         |. spaces
         |. keyword "="
         |. spaces
-        |= rhs
+        |= oneOf (alternation :: rhsNonLazy)
         |. endOfRule
 
 
@@ -66,12 +66,11 @@ endOfRule =
 
 rhsNonLazy : List (Parser Rhs)
 rhsNonLazy =
-    [ --alternation
-      --, concatenation
-      option
-    , grouping
-    , repetition
-    , terminal
+    [ --, concatenation
+      --option
+      --, grouping
+      --  repetition
+      terminal
     , ident
     ]
 
@@ -83,17 +82,6 @@ rhs =
             |= lazy (\_ -> oneOf rhsNonLazy)
 
 
-
--- [ --lazy (\_ -> alternation)
---   --, lazy (\_ -> concatenation)
---   lazy (\_ -> option)
--- , lazy (\_ -> grouping)
--- , lazy (\_ -> repetition)
--- , terminal
--- , ident
--- ]
-
-
 concatenation : Parser Rhs
 concatenation =
     succeed Concatenation
@@ -101,17 +89,11 @@ concatenation =
         |= con
 
 
-alternation : Parser Alternation
+alternation : Parser Rhs
 alternation =
-    oneOf
-        [ succeed Alternate |= rhs |= lazy (\_ -> alternation)
-        , succeed Single |= rhs
-        ]
-
-
-
--- succeed Alternation
---     |= andThen (\n -> rhsListHelp alt [ n ]) rhs
+    succeed Alternation
+        |= lazy (\_ -> oneOf rhsNonLazy)
+        |= lazy (\_ -> oneOf rhsNonLazy)
 
 
 rhsListHelp : Parser Rhs -> List Rhs -> Parser (List Rhs)
@@ -144,37 +126,31 @@ con =
 option : Parser Rhs
 option =
     succeed Option
-        |. spaces
         |. keyword "["
         |. spaces
         |= rhs
         |. spaces
         |. keyword "]"
-        |. spaces
 
 
 grouping : Parser Rhs
 grouping =
     succeed Grouping
-        |. spaces
         |. keyword "("
         |. spaces
         |= rhs
         |. spaces
         |. keyword ")"
-        |. spaces
 
 
 repetition : Parser Rhs
 repetition =
     succeed Repetition
-        |. spaces
         |. keyword "{"
         |. spaces
         |= rhs
         |. spaces
         |. keyword "}"
-        |. spaces
 
 
 ident : Parser Rhs

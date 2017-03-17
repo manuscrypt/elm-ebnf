@@ -31,10 +31,10 @@ init =
 
 parse : Model -> Model
 parse model =
-    case run Parsers.grammarParser model.input of
+    case run Parsers.rule model.input of
         Ok grammer ->
             { model
-                | grammar = Just grammer
+                | grammar = Just [ grammer ]
                 , err = Nothing
             }
 
@@ -129,6 +129,9 @@ viewProblem p =
 
         Fail s ->
             "failed with: " ++ s
+
+        BadRepeat ->
+            "you made a bad repeat"
 
 
 subs : Model -> Sub Msg
