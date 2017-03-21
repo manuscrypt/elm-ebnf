@@ -5,7 +5,7 @@ import Parser exposing (..)
 
 spaces : Parser ()
 spaces =
-    ignoreWhile (\char -> char == ' ')
+    ignore zeroOrMore (\c -> c == ' ')
 
 
 isLetter : Char -> Bool
@@ -109,46 +109,43 @@ digits =
 
 symbols : List Char
 symbols =
-    [ '['
-    , ']'
-    , '{'
-    , '}'
-    , '('
-    , ')'
-    , '<'
+    [ '<'
     , '>'
-    , '"'
-    , '\''
-    , '='
-    , ','
     , '.'
     , ','
     , ';'
+    , '='
     ]
 
 
-letter : Parser ()
-letter =
-    succeed identity
-        |= (oneOf <|
-                List.map symbol <|
-                    List.map toString letters
-           )
 
-
-digit : Parser ()
-digit =
-    succeed identity
-        |= (oneOf <|
-                List.map symbol <|
-                    List.map toString digits
-           )
-
-
-sym : Parser ()
-sym =
-    succeed identity
-        |= (oneOf <|
-                List.map symbol <|
-                    List.map toString symbols
-           )
+-- letter : Parser ()
+-- letter =
+--     succeed identity
+--         |= (oneOf <|
+--                 List.map symbol <|
+--                     List.map toString letters
+--            )
+--
+--
+-- digit : Parser ()
+-- digit =
+--     succeed identity
+--         |= (oneOf <|
+--                 List.map symbol <|
+--                     List.map toString digits
+--            )
+--
+--
+-- sym : Parser ()
+-- sym =
+--     succeed identity
+--         |= (oneOf <|
+--                 List.map symbol <|
+--                     List.map toString symbols
+--            )
+--
+--
+-- char : Parser ()
+-- char =
+--     oneOf [ letter, digit, sym, symbol "_" ]

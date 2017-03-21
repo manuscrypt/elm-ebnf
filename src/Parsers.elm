@@ -3,174 +3,123 @@ module Parsers exposing (..)
 import Parser exposing (..)
 import Parser.LanguageKit as Parser exposing (..)
 import Symbols exposing (..)
-import Types exposing (..)
 import Set
 
 
-keySymbols : Set.Set String
-keySymbols =
-    Set.fromList [ "=", ",", ";", "|", "-" ]
+type Syntax
+    = Syntax (List Production)
 
 
-doubleQuotedString : Parser String
-doubleQuotedString =
-    variable (\c -> c == '"') (\c -> isCharacter c) (Set.fromList [])
+type Production
+    = Production Factor Expression
 
 
-singleQuotedString : Parser String
-singleQuotedString =
-    variable (\c -> c == '\'') (\c -> isCharacter c) (Set.fromList [])
+type alias Expression =
+    List Factor
 
 
-identifier : Parser String
-identifier =
-    variable isLetter isLetterOrDigitOrUnderscore noKeywords
+type Factor
+    = Identifier String
+    | Literal String
+    | Option Expression
+    | Group Expression
+    | Repetition Expression
+    | Alternation Expression
 
 
-terminal : Parser Rhs
-terminal =
-    succeed Terminal
-        |= oneOf [ singleQuotedString, doubleQuotedString ]
+syntax : Parser Syntax
+syntax =
+    succeed Syntax
+        |= repeat zeroOrMore production
 
 
-noKeywords : Set.Set comparable
-noKeywords =
-    Set.fromList []
-
-
-grammarParser : Parser (List Rule)
-grammarParser =
-    succeed identity
-        |= Parser.zeroOrMore rule
-        |. end
-
-
-rule : Parser Rule
-rule =
-    succeed Rule
+production : Parser Production
+production =
+    succeed Production
         |. spaces
         |= identifier
         |. spaces
-        |. keyword "="
-        |. spaces
-        |= oneOf (alternation :: rhsNonLazy)
-        |. endOfRule
+        |. symbol "="
+        |= alternation
+        |. symbol "."
 
 
-endOfRule : Parser (a -> a)
-endOfRule =
-    delayedCommit spaces <|
-        succeed identity
-            |. keyword ";"
+expression : Parser (List Factor)
+expression =
+    repeat zeroOrMore
+        (succeed identity
+            |. spaces
+            |= factor
+            |. spaces
+        )
 
 
-rhsNonLazy : List (Parser Rhs)
-rhsNonLazy =
-    [ --, concatenation
-      --option
-      --, grouping
-      --  repetition
-      terminal
-    , ident
-    ]
-
-
-rhs : Parser Rhs
-rhs =
-    delayedCommit spaces <|
-        succeed identity
-            |= lazy (\_ -> oneOf rhsNonLazy)
-
-
-concatenation : Parser Rhs
-concatenation =
-    succeed Concatenation
-        |= rhs
-        |= con
-
-
-alternation : Parser Rhs
+alternation : Parser (List Factor)
 alternation =
-    succeed Alternation
-        |= lazy (\_ -> oneOf rhsNonLazy)
-        |= lazy (\_ -> oneOf rhsNonLazy)
+    succeed identity
+        |= sequence
+            { start = ""
+            , separator = "|"
+            , end = ""
+            , spaces = spaces
+            , item = factor
+            , trailing = Forbidden
+            }
 
 
-rhsListHelp : Parser Rhs -> List Rhs -> Parser (List Rhs)
-rhsListHelp next revs =
+factor : Parser Factor
+factor =
     oneOf
-        [ next
-            |> andThen (\n -> rhsListHelp next (n :: revs))
-        , succeed (List.reverse revs)
+        [ identifier
+        , literal
+        , lazy (\_ -> oneOf [ opt, grp, rep ])
         ]
 
 
-alt : Parser Rhs
-alt =
-    delayedCommit spaces <|
-        succeed identity
-            |. symbol "|"
-            |. spaces
-            |= rhs
+opt : Parser Factor
+opt =
+    succeed Option |= list spaces (lazy (\_ -> factor))
 
 
-con : Parser Rhs
-con =
-    delayedCommit spaces <|
-        succeed identity
-            |. symbol ","
-            |. spaces
-            |= rhs
+grp : Parser Factor
+grp =
+    succeed Group |= tuple spaces (lazy (\_ -> factor))
 
 
-option : Parser Rhs
-option =
-    succeed Option
-        |. keyword "["
-        |. spaces
-        |= rhs
-        |. spaces
-        |. keyword "]"
+rep : Parser Factor
+rep =
+    succeed Repetition |= record spaces (lazy (\_ -> factor))
 
 
-grouping : Parser Rhs
-grouping =
-    succeed Grouping
-        |. keyword "("
-        |. spaces
-        |= rhs
-        |. spaces
-        |. keyword ")"
+identifier : Parser Factor
+identifier =
+    succeed Identifier |= variable isLetter isCharacter Set.empty
 
 
-repetition : Parser Rhs
-repetition =
-    succeed Repetition
-        |. keyword "{"
-        |. spaces
-        |= rhs
-        |. spaces
-        |. keyword "}"
+literal : Parser Factor
+literal =
+    succeed Literal |= oneOf [ sLiteral, dLiteral ]
 
 
-ident : Parser Rhs
-ident =
-    succeed Identifier |= identifier
+sLiteral : Parser String
+sLiteral =
+    succeed identity |. spaces |. keyword "'" |= anyString |. keyword "'"
+
+
+dLiteral : Parser String
+dLiteral =
+    succeed identity |. keyword "\"" |= anyString |. keyword "\""
+
+
+anyString : Parser String
+anyString =
+    succeed identity |= variable isCharacter isCharacter Set.empty
 
 
 
 --
--- comment =
---    succeed Comment
---          |. symbol "(*"
---          |. spaces
---          |= c
---          |. spaces
---          |. symbol "*)"
--- special =
---      succeed identity
---          |. symbol "?"
---          |. spaces
---          |= seq
---          |. spaces
---          |. symbol "?"
+-- delayedCommit spaces <|
+--     succeed identity
+--         |. symbol "|"
+--         |. spaces
+--         |= lazy (\_ -> term)

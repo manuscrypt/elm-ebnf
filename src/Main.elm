@@ -4,14 +4,13 @@ import Html exposing (Html, div, text, input)
 import Html.Attributes as HA exposing (type_, value)
 import Html.Events as HE
 import Parser exposing (..)
-import Parsers exposing (grammarParser)
-import Types exposing (..)
+import Parsers exposing (..)
 
 
 type alias Model =
     { input : String
     , err : Maybe Parser.Error
-    , grammar : Maybe Grammar
+    , grammar : Maybe Production
     }
 
 
@@ -31,10 +30,10 @@ init =
 
 parse : Model -> Model
 parse model =
-    case run Parsers.rule model.input of
+    case run Parsers.production model.input of
         Ok grammer ->
             { model
-                | grammar = Just [ grammer ]
+                | grammar = Just grammer
                 , err = Nothing
             }
 
@@ -68,28 +67,25 @@ view model =
 
             Just err ->
                 viewError err
-        , div [] [ Maybe.map viewGrammar model.grammar |> Maybe.withDefault (text "no output") ]
+        , div [] [ Maybe.map viewRule model.grammar |> Maybe.withDefault (text "no output") ]
         ]
 
 
-viewGrammar : Grammar -> Html Msg
-viewGrammar g =
-    div [] (text "Rules" :: List.map viewRule g)
+viewGrammar : Syntax -> Html Msg
+viewGrammar (Syntax productions) =
+    div [] (text "Rules" :: List.map viewRule productions)
 
 
-viewRule : Rule -> Html Msg
-viewRule r =
-    div [] [ text <| r.lhs ++ " = " ++ toString r.rhs ++ ";" ]
+viewRule : Production -> Html Msg
+viewRule (Production factor expression) =
+    div [] [ text <| toString factor ++ " = " ++ toString expression ++ ";" ]
 
 
-viewRhs : Rhs -> Html msg
+viewRhs : Factor -> Html msg
 viewRhs rhs =
     case rhs of
         Identifier name ->
             div [] [ text <| "Identifier: " ++ name ]
-
-        Terminal str ->
-            div [] [ text <| "terminal: " ++ str ]
 
         _ ->
             div [] [ text <| "Not implemented: " ++ toString rhs ]
@@ -106,8 +102,8 @@ viewProblem p =
         BadOneOf _ ->
             "bad one of"
 
-        BadIgnore ->
-            "bad ignore"
+        ExpectingClosing what ->
+            "expecting closing: " ++ what
 
         BadInt ->
             "bad int"
