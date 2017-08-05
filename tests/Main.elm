@@ -1,13 +1,24 @@
-port module Main exposing (..)
+module Main exposing (..)
 
-import Tests
-import Test.Runner.Node exposing (run, TestProgram)
-import Json.Encode exposing (Value)
+import ExpressionTest exposing (..)
+import IdentifierTest exposing (..)
+import QuotedStringsTest exposing (..)
+import SymbolsTest exposing (..)
+import Test exposing (..)
+import Test.Runner.Html
 
 
-main : TestProgram
+suite : Test
+suite =
+    describe "The EBNF parser module"
+        [ SymbolsTest.suite
+        , QuotedStringsTest.suite
+        , IdentifierTest.suite
+        , ExpressionTest.suite
+        ]
+
+
+main : Test.Runner.Html.TestProgram
 main =
-    run emit Tests.suite
-
-
-port emit : ( String, Value ) -> Cmd msg
+    suite
+        |> Test.Runner.Html.run

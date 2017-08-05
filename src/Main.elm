@@ -1,6 +1,6 @@
 module Main exposing (..)
 
-import Html exposing (Html, div, text, input)
+import Html exposing (Html, div, input, text)
 import Html.Attributes as HA exposing (type_, value)
 import Html.Events as HE
 import Parser exposing (..)
@@ -10,7 +10,7 @@ import Parsers exposing (..)
 type alias Model =
     { input : String
     , err : Maybe Parser.Error
-    , grammar : Maybe Production
+    , grammar : Maybe Syntax
     }
 
 
@@ -30,7 +30,7 @@ init =
 
 parse : Model -> Model
 parse model =
-    case run Parsers.production model.input of
+    case run Parsers.syntax model.input of
         Ok grammer ->
             { model
                 | grammar = Just grammer
@@ -57,7 +57,8 @@ view model =
         [ Html.textarea
             [ value model.input
             , HE.onInput OnInput
-            , HA.rows 6
+            , HA.rows 12
+            , HA.style [ (,) "width" "100%" ]
             ]
             []
         , div [] [ text model.input ]
@@ -67,7 +68,7 @@ view model =
 
             Just err ->
                 viewError err
-        , div [] [ Maybe.map viewRule model.grammar |> Maybe.withDefault (text "no output") ]
+        , div [] [ Maybe.map viewGrammar model.grammar |> Maybe.withDefault (text "no output") ]
         ]
 
 

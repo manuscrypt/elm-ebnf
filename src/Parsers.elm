@@ -2,8 +2,8 @@ module Parsers exposing (..)
 
 import Parser exposing (..)
 import Parser.LanguageKit as Parser exposing (..)
-import Symbols exposing (..)
 import Set
+import Symbols exposing (..)
 
 
 type Syntax
@@ -41,7 +41,8 @@ production =
         |. spaces
         |. symbol "="
         |= alternation
-        |. symbol "."
+        |. oneOf [ symbol ".", symbol ";" ]
+        |. spaces
 
 
 expression : Parser (List Factor)
@@ -103,17 +104,21 @@ literal =
 
 sLiteral : Parser String
 sLiteral =
-    succeed identity |. spaces |. keyword "'" |= anyString |. keyword "'"
+    succeed identity |. spaces |. symbol "'" |= anyString |. symbol "'"
 
 
 dLiteral : Parser String
 dLiteral =
-    succeed identity |. keyword "\"" |= anyString |. keyword "\""
+    succeed identity |. symbol "\"" |= anyString |. symbol "\""
 
 
 anyString : Parser String
 anyString =
-    succeed identity |= variable isCharacter isCharacter Set.empty
+    oneOf
+        [ succeed identity |= symbol "'" |> andThen (\_ -> succeed "'")
+        , succeed identity |= symbol "\"" |> andThen (\_ -> succeed "\"")
+        , succeed identity |= variable isCharacter isCharacter Set.empty
+        ]
 
 
 

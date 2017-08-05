@@ -5,7 +5,7 @@ import Parser exposing (..)
 
 spaces : Parser ()
 spaces =
-    ignore zeroOrMore (\c -> c == ' ')
+    ignore zeroOrMore (\c -> c == ' ' || c == '\n')
 
 
 isLetter : Char -> Bool
