@@ -30,7 +30,7 @@ doubleQuotedStringValidLettersPass =
 doubleQuoteInSingleQuotesPass : Test
 doubleQuoteInSingleQuotesPass =
     test "a double quote within single quotes passes" <|
-        \() -> expectEqual dLiteral "'\"'" <| "\""
+        \() -> expectEqual sLiteral "'\"'" <| "\""
 
 
 singleQuoteInDoubleQuotesPass : Test

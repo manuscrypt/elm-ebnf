@@ -1,8 +1,8 @@
 module IdentifierTest exposing (..)
 
-import Test exposing (..)
 import Parsers exposing (..)
-import TestHelpers exposing (expectFail, expectEqual)
+import Test exposing (..)
+import TestHelpers exposing (expectEqual, expectFail)
 
 
 suite : Test

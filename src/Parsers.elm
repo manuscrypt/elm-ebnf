@@ -10,101 +10,166 @@ type Syntax
     = Syntax (List Production)
 
 
-type Production
-    = Production Factor Expression
-
-
-type alias Expression =
-    List Factor
-
-
-type Factor
+type Identifier
     = Identifier String
+
+
+type Production
+    = Production Identifier Rhs
+
+
+type Expression
+    = RefId Identifier
     | Literal String
-    | Option Expression
-    | Group Expression
-    | Repetition Expression
-    | Alternation Expression
+    | Option (List Expression)
+    | Group (List Expression)
+    | Repetition (List Expression)
+
+
+type Rhs
+    = Alternation Expression Expression
+    | Concatenation Expression Expression
+    | Single Expression
 
 
 syntax : Parser Syntax
 syntax =
     succeed Syntax
-        |= repeat zeroOrMore production
+        |= repeat oneOrMore production
+        |. end
 
 
 production : Parser Production
 production =
-    succeed Production
-        |. spaces
-        |= identifier
-        |. spaces
-        |. symbol "="
-        |= alternation
-        |. oneOf [ symbol ".", symbol ";" ]
-        |. spaces
+    inContext "production" <|
+        succeed Production
+            |. spaces
+            |= identifier
+            |. spaces
+            |. symbol "="
+            |. spaces
+            |= rhs
+            |. spaces
+            |. oneOf [ symbol ".", symbol ";" ]
 
 
-expression : Parser (List Factor)
+rhs : Parser Rhs
+rhs =
+    inContext "rhs" <|
+        succeed identity
+            |= oneOf
+                [ concatenation
+                , alternation
+                , succeed Single
+                    |= lazy
+                        (\_ -> expression)
+                ]
+
+
+expression : Parser Expression
 expression =
-    repeat zeroOrMore
-        (succeed identity
+    inContext "expression" <|
+        succeed identity
             |. spaces
-            |= factor
+            |= oneOf
+                [ succeed RefId |= identifier
+                , literal
+                , lazy
+                    (\_ ->
+                        oneOf
+                            [ opt
+                            , grp
+                            , rep
+                            ]
+                    )
+                ]
             |. spaces
-        )
 
 
-alternation : Parser (List Factor)
+alternation : Parser Rhs
 alternation =
-    succeed identity
-        |= sequence
-            { start = ""
-            , separator = "|"
-            , end = ""
-            , spaces = spaces
-            , item = factor
-            , trailing = Forbidden
-            }
+    inContext "alternation" <|
+        succeed Alternation
+            |= lazy
+                (\_ -> expression)
+            |. symbol "|"
+            |= lazy
+                (\_ -> expression)
 
 
-factor : Parser Factor
-factor =
-    oneOf
-        [ identifier
-        , literal
-        , lazy (\_ -> oneOf [ opt, grp, rep ])
-        ]
+
+-- repeat zeroOrMore
+--       |= sequence
+--           { start = ""
+--           , separator = "|"
+--           , end = ""
+--           , spaces = spaces
+--           , item = expression
+--           , trailing = Forbidden
+--           }
 
 
-opt : Parser Factor
+concatenation : Parser Rhs
+concatenation =
+    inContext "concatenation" <|
+        succeed Concatenation
+            |= lazy
+                (\_ -> expression)
+            |. symbol ","
+            |= lazy
+                (\_ -> expression)
+
+
+
+-- succeed Concatenation
+--     |= sequence
+--         { start = ""
+--         , separator = ","
+--         , end = ""
+--         , spaces = spaces
+--         , item = expression
+--         , trailing = Forbidden
+--         }
+
+
+opt : Parser Expression
 opt =
-    succeed Option |= list spaces (lazy (\_ -> factor))
+    inContext "option" <|
+        succeed Option
+            |= list spaces (lazy (\_ -> expression))
 
 
-grp : Parser Factor
+grp : Parser Expression
 grp =
-    succeed Group |= tuple spaces (lazy (\_ -> factor))
+    inContext "group" <|
+        succeed Group
+            |= tuple spaces (lazy (\_ -> expression))
 
 
-rep : Parser Factor
+rep : Parser Expression
 rep =
-    succeed Repetition |= record spaces (lazy (\_ -> factor))
+    inContext "repetition" <|
+        succeed Repetition
+            |= record spaces (lazy (\_ -> expression))
 
 
-identifier : Parser Factor
+identifier : Parser Identifier
 identifier =
-    succeed Identifier |= variable isLetter isCharacter Set.empty
+    inContext "identifier" <|
+        succeed Identifier
+            |= variable isLetter isLetterOrDigitOrUnderscore Set.empty
 
 
-literal : Parser Factor
+literal : Parser Expression
 literal =
-    succeed Literal |= oneOf [ sLiteral, dLiteral ]
+    inContext "literal" <|
+        succeed Literal
+            |= oneOf [ sLiteral, dLiteral ]
 
 
 sLiteral : Parser String
 sLiteral =
-    succeed identity |. spaces |. symbol "'" |= anyString |. symbol "'"
+    succeed identity |. symbol "'" |= anyString |. symbol "'"
 
 
 dLiteral : Parser String
@@ -115,9 +180,9 @@ dLiteral =
 anyString : Parser String
 anyString =
     oneOf
-        [ succeed identity |= symbol "'" |> andThen (\_ -> succeed "'")
-        , succeed identity |= symbol "\"" |> andThen (\_ -> succeed "\"")
-        , succeed identity |= variable isCharacter isCharacter Set.empty
+        [ source (ignore (Exactly 1) (\c -> c == '\''))
+        , source (ignore (Exactly 1) (\c -> c == '"'))
+        , variable isCharacter isCharacter Set.empty
         ]
 
 

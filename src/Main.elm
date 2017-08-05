@@ -82,10 +82,10 @@ viewRule (Production factor expression) =
     div [] [ text <| toString factor ++ " = " ++ toString expression ++ ";" ]
 
 
-viewRhs : Factor -> Html msg
-viewRhs rhs =
-    case rhs of
-        Identifier name ->
+viewExpression : Expression -> Html msg
+viewExpression exp =
+    case exp of
+        RefId (Identifier name) ->
             div [] [ text <| "Identifier: " ++ name ]
 
         _ ->
@@ -100,8 +100,11 @@ viewError err =
 viewProblem : Problem -> String
 viewProblem p =
     case p of
-        BadOneOf _ ->
-            "bad one of"
+        BadOneOf list ->
+            "bad one of: "
+                ++ (String.join ",  " <|
+                        List.map viewProblem list
+                   )
 
         ExpectingClosing what ->
             "expecting closing: " ++ what
