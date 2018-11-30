@@ -1,18 +1,8 @@
-module QuotedStringsTest exposing (..)
+module QuotedStringsTest exposing (doubleQuoteInSingleQuotesPass, doubleQuotedStringValidLettersPass, singleQuoteInDoubleQuotesPass, singleQuotedStringValidLettersPass)
 
 import Parsers exposing (..)
 import Test exposing (..)
 import TestHelpers exposing (expectEqual, expectFail)
-
-
-suite : Test
-suite =
-    describe "quoted strings tests"
-        [ singleQuotedStringValidLettersPass
-        , doubleQuotedStringValidLettersPass
-        , doubleQuoteInSingleQuotesPass
-        , singleQuoteInDoubleQuotesPass
-        ]
 
 
 singleQuotedStringValidLettersPass : Test
@@ -24,7 +14,7 @@ singleQuotedStringValidLettersPass =
 doubleQuotedStringValidLettersPass : Test
 doubleQuotedStringValidLettersPass =
     test "valid double quoted string with valid letters passes" <|
-        \() -> expectEqual dLiteral (toString "qwert") <| "qwert"
+        \() -> expectEqual dLiteral (Debug.toString "qwert") <| "qwert"
 
 
 doubleQuoteInSingleQuotesPass : Test
@@ -36,4 +26,4 @@ doubleQuoteInSingleQuotesPass =
 singleQuoteInDoubleQuotesPass : Test
 singleQuoteInDoubleQuotesPass =
     test "a single quote within double quotes passes" <|
-        \() -> expectEqual dLiteral (toString "'") <| "'"
+        \() -> expectEqual dLiteral (Debug.toString "'") <| "'"

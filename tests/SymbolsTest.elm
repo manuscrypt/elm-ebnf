@@ -1,18 +1,19 @@
-module SymbolsTest exposing (..)
+module SymbolsTest exposing (multiLettersOneInvalidFailure, multiValidLetterSuccess, singleInvalidLetterFailure, singleValidLetterSuccess)
 
 import Parsers exposing (..)
 import Test exposing (..)
 import TestHelpers exposing (expectEqual, expectFail)
 
 
-suite : Test
-suite =
-    describe "terminal Tests"
-        [ singleValidLetterSuccess
-        , singleInvalidLetterFailure
-        , multiValidLetterSuccess
-        , multiLettersOneInvalidFailure
-        ]
+
+-- suite : Test
+-- suite =
+--     describe "terminal Tests"
+--         [ singleValidLetterSuccess
+--         , singleInvalidLetterFailure
+--         , multiValidLetterSuccess
+--         , multiLettersOneInvalidFailure
+--         ]
 
 
 singleValidLetterSuccess : Test

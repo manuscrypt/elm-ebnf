@@ -1,15 +1,16 @@
-module IdentifierTest exposing (..)
+module IdentifierTest exposing (validIdentifierPass)
 
 import Parsers exposing (..)
 import Test exposing (..)
 import TestHelpers exposing (expectEqual, expectFail)
 
 
-suite : Test
-suite =
-    describe "identifier tests"
-        [ validIdentifierPass
-        ]
+
+-- suite : Test
+-- suite =
+--     describe "identifier tests"
+--         [ validIdentifierPass
+--         ]
 
 
 validIdentifierPass : Test

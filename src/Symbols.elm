@@ -1,11 +1,6 @@
-module Symbols exposing (..)
+module Symbols exposing (digits, isCharacter, isDigit, isLetter, isLetterOrDigitOrUnderscore, isSymbol, letters, symbols)
 
 import Parser exposing (..)
-
-
-spaces : Parser ()
-spaces =
-    ignore zeroOrMore (\c -> c == ' ' || c == '\n')
 
 
 isLetter : Char -> Bool
@@ -123,36 +118,3 @@ symbols =
     , '|'
     , ';'
     ]
-
-
-
--- letter : Parser ()
--- letter =
---     succeed identity
---         |= (oneOf <|
---                 List.map symbol <|
---                     List.map toString letters
---            )
---
---
--- digit : Parser ()
--- digit =
---     succeed identity
---         |= (oneOf <|
---                 List.map symbol <|
---                     List.map toString digits
---            )
---
---
--- sym : Parser ()
--- sym =
---     succeed identity
---         |= (oneOf <|
---                 List.map symbol <|
---                     List.map toString symbols
---            )
---
---
--- char : Parser ()
--- char =
---     oneOf [ letter, digit, sym, symbol "_" ]

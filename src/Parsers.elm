@@ -1,7 +1,8 @@
-module Parsers exposing (..)
+module Parsers exposing (Expression(..), Identifier(..), Production(..), Rhs(..), Syntax(..), alternation, anyString, concatenation, dLiteral, expression, grp, identifier, opt, production, rep, sLiteral, syntax)
+
+--import Parser.Advanced as Parser exposing (..)
 
 import Parser exposing (..)
-import Parser.LanguageKit as Parser exposing (..)
 import Set
 import Symbols exposing (..)
 
@@ -35,136 +36,99 @@ type Rhs
 syntax : Parser Syntax
 syntax =
     succeed Syntax
-        |= repeat oneOrMore production
+        |= loop [] productionsHelp
         |. end
+
+
+productionsHelp : List Production -> Parser (Step (List Production) (List Production))
+productionsHelp revProductions =
+    oneOf
+        [ succeed (\prods -> Loop (prods :: revProductions))
+            |= production
+        , succeed ()
+            |> map (\_ -> Done (List.reverse revProductions))
+        ]
 
 
 production : Parser Production
 production =
-    inContext "production" <|
-        succeed Production
-            |. spaces
-            |= identifier
-            |. spaces
-            |. symbol "="
-            |. spaces
-            |= rhs
-            |. spaces
-            |. oneOf [ symbol ".", symbol ";" ]
-
-
-rhs : Parser Rhs
-rhs =
-    inContext "rhs" <|
-        succeed identity
-            |= oneOf
-                [ concatenation
-                , alternation
-                , succeed Single
-                    |= lazy
-                        (\_ -> expression)
-                ]
+    succeed Production
+        |. spaces
+        |= identifier
+        |. spaces
+        |. symbol "="
+        |. spaces
+        |= oneOf
+            [ succeed Single |= expression
+            , alternation
+            , concatenation
+            ]
+        |. spaces
+        |. oneOf [ symbol ".", symbol ";" ]
+        |. chompUntilEndOr "\n"
 
 
 expression : Parser Expression
 expression =
-    inContext "expression" <|
-        succeed identity
-            |. spaces
-            |= oneOf
-                [ succeed RefId |= identifier
-                , literal
-                , lazy
-                    (\_ ->
-                        oneOf
-                            [ opt
-                            , grp
-                            , rep
-                            ]
-                    )
+    succeed identity
+        |= oneOf
+            [ succeed RefId |= identifier
+            , succeed Literal
+                |= oneOf [ sLiteral, dLiteral ]
+            , oneOf
+                [ opt
+                , grp
+                , rep
                 ]
-            |. spaces
-
-
-alternation : Parser Rhs
-alternation =
-    inContext "alternation" <|
-        succeed Alternation
-            |= lazy
-                (\_ -> expression)
-            |. symbol "|"
-            |= lazy
-                (\_ -> expression)
-
-
-
--- repeat zeroOrMore
---       |= sequence
---           { start = ""
---           , separator = "|"
---           , end = ""
---           , spaces = spaces
---           , item = expression
---           , trailing = Forbidden
---           }
+            ]
 
 
 concatenation : Parser Rhs
 concatenation =
-    inContext "concatenation" <|
-        succeed Concatenation
-            |= lazy
-                (\_ -> expression)
-            |. symbol ","
-            |= lazy
-                (\_ -> expression)
+    succeed Concatenation
+        |. spaces
+        |= expression
+        |. spaces
+        |. symbol ","
+        |. spaces
+        |= expression
+        |. spaces
 
 
-
--- succeed Concatenation
---     |= sequence
---         { start = ""
---         , separator = ","
---         , end = ""
---         , spaces = spaces
---         , item = expression
---         , trailing = Forbidden
---         }
+alternation : Parser Rhs
+alternation =
+    succeed Alternation
+        |. spaces
+        |= expression
+        |. spaces
+        |. symbol "|"
+        |. spaces
+        |= expression
+        |. spaces
 
 
 opt : Parser Expression
 opt =
-    inContext "option" <|
-        succeed Option
-            |= list spaces (lazy (\_ -> expression))
+    succeed Option
+        |= sequence { start = "[", separator = ",", end = "]", spaces = spaces, item = lazy (\_ -> expression), trailing = Optional }
 
 
 grp : Parser Expression
 grp =
-    inContext "group" <|
-        succeed Group
-            |= tuple spaces (lazy (\_ -> expression))
+    succeed Group
+        |= sequence { start = "(", separator = ",", end = ")", spaces = spaces, item = lazy (\_ -> expression), trailing = Optional }
 
 
 rep : Parser Expression
 rep =
-    inContext "repetition" <|
-        succeed Repetition
-            |= record spaces (lazy (\_ -> expression))
+    succeed Repetition
+        |= sequence { start = "{", separator = ",", end = "}", spaces = spaces, item = lazy (\_ -> expression), trailing = Optional }
 
 
 identifier : Parser Identifier
 identifier =
-    inContext "identifier" <|
-        succeed Identifier
-            |= variable isLetter isLetterOrDigitOrUnderscore Set.empty
-
-
-literal : Parser Expression
-literal =
-    inContext "literal" <|
-        succeed Literal
-            |= oneOf [ sLiteral, dLiteral ]
+    succeed Identifier
+        |= variable { start = isLetter, inner = isLetterOrDigitOrUnderscore, reserved = Set.empty }
 
 
 sLiteral : Parser String
@@ -180,13 +144,18 @@ dLiteral =
 anyString : Parser String
 anyString =
     oneOf
-        [ source (ignore (Exactly 1) (\c -> c == '\''))
-        , source (ignore (Exactly 1) (\c -> c == '"'))
-        , variable isCharacter isCharacter Set.empty
+        [ chompIf (\c -> c == '\'') |> getChompedString
+        , chompIf (\c -> c == '"') |> getChompedString
+        , variable { start = isCharacter, inner = isCharacter, reserved = Set.empty }
         ]
 
 
 
+-- oneOf
+--     [ symbol "\"" |. chompUntil "\"" |> getChompedString
+--     , symbol "'" |. chompUntil "'" |> getChompedString
+--     , variable { start = isCharacter, inner = isCharacter, reserved = Set.empty }
+--     ]
 --
 -- delayedCommit spaces <|
 --     succeed identity

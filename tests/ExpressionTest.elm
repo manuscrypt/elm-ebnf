@@ -1,20 +1,21 @@
-module ExpressionTest exposing (..)
+module ExpressionTest exposing (validAlternationPass, validConcatenationPass, validGroupPass, validOptionPass, validOptionsPass, validRepetitionPass)
 
 import Parsers exposing (..)
 import Test exposing (..)
 import TestHelpers exposing (expectEqual, expectFail)
 
 
-suite : Test
-suite =
-    describe "repetition tests"
-        [ validRepetitionPass
-        , validOptionPass
-        , validOptionsPass
-        , validGroupPass
-        , validAlternationPass
-        , validConcatenationPass
-        ]
+
+-- suite : Test
+-- suite =
+--     describe "repetition tests"
+--         [ validRepetitionPass
+--         , validOptionPass
+--         , validOptionsPass
+--         , validGroupPass
+--         , validAlternationPass
+--         , validConcatenationPass
+--         ]
 
 
 validRepetitionPass : Test

@@ -1,5 +1,6 @@
-module Main exposing (..)
+module Main exposing (Model, Msg(..), init, main, parse, update, view, viewError, viewExpression, viewGrammar, viewProblem, viewRule)
 
+import Browser
 import Html exposing (Html, div, input, text)
 import Html.Attributes as HA exposing (type_, value)
 import Html.Events as HE
@@ -9,7 +10,7 @@ import Parsers exposing (..)
 
 type alias Model =
     { input : String
-    , err : Maybe Parser.Error
+    , err : Maybe (List Parser.DeadEnd)
     , grammar : Maybe Syntax
     }
 
@@ -18,14 +19,14 @@ type Msg
     = OnInput String
 
 
-main : Program Never Model Msg
+main : Program () Model Msg
 main =
-    Html.program { init = init, update = update, view = view, subscriptions = subs }
+    Browser.element { init = \_ -> init, update = update, view = view, subscriptions = always Sub.none }
 
 
 init : ( Model, Cmd Msg )
 init =
-    Model "" Nothing Nothing ! []
+    ( Model "" Nothing Nothing, Cmd.none )
 
 
 parse : Model -> Model
@@ -48,17 +49,17 @@ update : Msg -> Model -> ( Model, Cmd Msg )
 update msg model =
     case msg of
         OnInput str ->
-            parse { model | input = str } ! []
+            ( parse { model | input = str }, Cmd.none )
 
 
 view : Model -> Html Msg
 view model =
-    div [ HA.style [ (,) "width" "920px", (,) "margin" "auto" ] ]
+    div [ HA.style "width" "920px", HA.style "margin" "auto" ]
         [ Html.textarea
             [ value model.input
             , HE.onInput OnInput
             , HA.rows 12
-            , HA.style [ (,) "width" "100%" ]
+            , HA.style "width" "100%"
             ]
             []
         , div [] [ text model.input ]
@@ -67,7 +68,7 @@ view model =
                 text "no error"
 
             Just err ->
-                viewError err
+                div [] <| List.map viewError err
         , div [] [ Maybe.map viewGrammar model.grammar |> Maybe.withDefault (text "no output") ]
         ]
 
@@ -79,7 +80,7 @@ viewGrammar (Syntax productions) =
 
 viewRule : Production -> Html Msg
 viewRule (Production factor expression) =
-    div [] [ text <| toString factor ++ " = " ++ toString expression ++ ";" ]
+    div [] [ text <| Debug.toString factor ++ " = " ++ Debug.toString expression ++ ";" ]
 
 
 viewExpression : Expression -> Html msg
@@ -89,30 +90,24 @@ viewExpression exp =
             div [] [ text <| "Identifier: " ++ name ]
 
         _ ->
-            div [] [ text <| "Not implemented: " ++ toString rhs ]
+            div [] [ text <| "Not implemented" ]
 
 
-viewError : Parser.Error -> Html msg
+viewError : Parser.DeadEnd -> Html msg
 viewError err =
-    div [] [ text <| (toString err.row ++ "/" ++ toString err.col) ++ ":" ++ viewProblem err.problem ]
+    div [] [ text <| (Debug.toString err.row ++ "/" ++ Debug.toString err.col) ++ ":" ++ viewProblem err.problem ]
 
 
 viewProblem : Problem -> String
 viewProblem p =
     case p of
-        BadOneOf list ->
-            "bad one of: "
-                ++ (String.join ",  " <|
-                        List.map viewProblem list
-                   )
+        Expecting what ->
+            "expecting string: " ++ what
 
-        ExpectingClosing what ->
-            "expecting closing: " ++ what
-
-        BadInt ->
+        ExpectingInt ->
             "bad int"
 
-        BadFloat ->
+        ExpectingFloat ->
             "bad float"
 
         ExpectingEnd ->
@@ -127,13 +122,23 @@ viewProblem p =
         ExpectingVariable ->
             "expected variable"
 
-        Fail s ->
+        Problem s ->
             "failed with: " ++ s
 
         BadRepeat ->
             "you made a bad repeat"
 
+        ExpectingHex ->
+            "bad hex"
 
-subs : Model -> Sub Msg
-subs model =
-    Sub.none
+        ExpectingOctal ->
+            "bad octal"
+
+        ExpectingBinary ->
+            "bad binary"
+
+        ExpectingNumber ->
+            "bad number"
+
+        UnexpectedChar ->
+            "unexpected char"

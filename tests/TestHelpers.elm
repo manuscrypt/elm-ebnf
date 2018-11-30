@@ -1,4 +1,4 @@
-module TestHelpers exposing (..)
+module TestHelpers exposing (expectEqual, expectFail)
 
 import Expect
 import Parser exposing (..)
@@ -21,4 +21,4 @@ expectEqual parseFn input expected =
             Expect.equal res expected
 
         Err err ->
-            Expect.fail <| toString err
+            Expect.fail <| Debug.toString err
