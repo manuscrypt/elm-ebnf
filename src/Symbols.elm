@@ -1,7 +1,5 @@
 module Symbols exposing (digits, isCharacter, isDigit, isLetter, isLetterOrDigitOrUnderscore, isSymbol, letters, symbols)
 
-import Parser exposing (..)
-
 
 isLetter : Char -> Bool
 isLetter c =

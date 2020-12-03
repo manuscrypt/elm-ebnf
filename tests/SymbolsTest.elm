@@ -1,7 +1,7 @@
 module SymbolsTest exposing (multiLettersOneInvalidFailure, multiValidLetterSuccess, singleInvalidLetterFailure, singleValidLetterSuccess)
 
-import Parsers exposing (..)
-import Test exposing (..)
+import BnfParsers exposing (anyString)
+import Test exposing (Test, test)
 import TestHelpers exposing (expectEqual, expectFail)
 
 

@@ -1,8 +1,8 @@
 module IdentifierTest exposing (validIdentifierPass)
 
-import Parsers exposing (..)
-import Test exposing (..)
-import TestHelpers exposing (expectEqual, expectFail)
+import BnfParsers exposing (Identifier(..), identifier)
+import Test exposing (Test, test)
+import TestHelpers exposing (expectEqual)
 
 
 

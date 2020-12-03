@@ -3,11 +3,11 @@ module Main exposing (Model, Msg(..), init, main, parse, update, view, viewError
 -- import BnfParsers as Parsers exposing (..)
 
 import Browser
-import Html exposing (Html, div, input, text)
-import Html.Attributes as HA exposing (type_, value)
+import Html exposing (Html, div, text)
+import Html.Attributes as HA exposing (value)
 import Html.Events as HE
-import Parser exposing (..)
-import Parsers as Parsers exposing (..)
+import Parser exposing (Problem(..), run)
+import WsnParsers as Parsers exposing (Expression, Factor(..), Production, Syntax(..), Term)
 
 
 type alias Model =
@@ -105,13 +105,13 @@ viewFactor f =
             Literal lit ->
                 Html.span [] [ text <| "lit(" ++ lit ++ ")" ]
 
-            Repetition rep ->
+            Repetition _ ->
                 Html.span [] [ text <| "repetition" ]
 
-            Option opt ->
+            Option _ ->
                 Html.span [] [ text <| "option" ]
 
-            Group grp ->
+            Group _ ->
                 Html.span [] [ text <| "grouping" ]
         ]
 
@@ -121,7 +121,7 @@ viewError err =
     div [] [ text <| (Debug.toString err.row ++ "/" ++ Debug.toString err.col) ++ ":" ++ viewProblem err.problem ]
 
 
-viewProblem : Problem -> String
+viewProblem : Parser.Problem -> String
 viewProblem p =
     case p of
         Expecting what ->

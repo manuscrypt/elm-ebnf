@@ -1,16 +1,16 @@
 module TestHelpers exposing (expectEqual, expectFail)
 
 import Expect
-import Parser exposing (..)
+import Parser exposing (Parser)
 
 
 expectFail : Parser a -> String -> Expect.Expectation
 expectFail parseFn input =
     case Parser.run parseFn input of
-        Ok res ->
+        Ok _ ->
             Expect.fail <| "should not be able to parse " ++ input
 
-        Err err ->
+        Err _ ->
             Expect.pass
 
 

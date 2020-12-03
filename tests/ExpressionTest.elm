@@ -1,8 +1,8 @@
 module ExpressionTest exposing (validGroupPass, validOptionPass, validOptionsPass, validRepetitionPass)
 
-import BnfParsers exposing (..)
-import Test exposing (..)
-import TestHelpers exposing (expectEqual, expectFail)
+import BnfParsers exposing (Expression(..), Identifier(..), grp, opt, rep)
+import Test exposing (Test, test)
+import TestHelpers exposing (expectEqual)
 
 
 

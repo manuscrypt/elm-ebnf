@@ -2,9 +2,9 @@ module BnfParsers exposing (Expression(..), Identifier(..), Production(..), Synt
 
 --import Parser.Advanced as Parser exposing (..)
 
-import Parser exposing ((|.), (|=), Parser, Step(..), Trailing(..), backtrackable, chompIf, chompUntilEndOr, chompWhile, end, getChompedString, lazy, loop, map, oneOf, sequence, spaces, succeed, symbol, variable)
+import Parser exposing ((|.), (|=), Parser, Step(..), Trailing(..), chompIf, end, getChompedString, lazy, loop, map, oneOf, sequence, spaces, succeed, symbol, variable)
 import Set
-import Symbols exposing (isCharacter, isLetter, isLetterOrDigitOrUnderscore, isSymbol)
+import Symbols exposing (isCharacter, isLetter, isLetterOrDigitOrUnderscore)
 
 
 type Syntax

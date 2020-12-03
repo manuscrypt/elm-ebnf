@@ -1,8 +1,8 @@
 module QuotedStringsTest exposing (doubleQuoteInSingleQuotesPass, doubleQuotedStringValidLettersPass, singleQuoteInDoubleQuotesPass, singleQuotedStringValidLettersPass)
 
-import Parsers exposing (..)
-import Test exposing (..)
-import TestHelpers exposing (expectEqual, expectFail)
+import BnfParsers exposing (dLiteral, sLiteral)
+import Test exposing (Test, test)
+import TestHelpers exposing (expectEqual)
 
 
 singleQuotedStringValidLettersPass : Test
