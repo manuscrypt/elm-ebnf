@@ -1,4 +1,4 @@
-module WsnParsers exposing (Expression, Factor(..), Identifier, Production, Syntax(..), Term, expression, factor, factors, group, id, identifier, literal, option, production, productionsHelp, repetition, syntax, term)
+module WsnParsers exposing (Expression, Factor(..), Identifier, Production, Syntax(..), Term, expression, factor, factors, group, id, identifier, literal, makeSyntax, option, production, productions, productionsHelp, repetition, syntax, term)
 
 --import Parser.Advanced as Parser exposing (..)
 
@@ -35,6 +35,16 @@ type Factor
     | Repetition Expression
     | Option Expression
     | Group Expression
+
+
+makeSyntax : List Production -> Syntax
+makeSyntax prods =
+    Syntax prods
+
+
+productions : Syntax -> List Production
+productions (Syntax prods) =
+    prods
 
 
 syntax : Parser Syntax

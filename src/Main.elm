@@ -3,6 +3,7 @@ module Main exposing (Model, Msg(..), init, main, parse, update, view, viewError
 -- import BnfParsers as Parsers exposing (..)
 
 import Browser
+import Generator exposing (generate)
 import Html exposing (Html, div, text)
 import Html.Attributes as HA exposing (value)
 import Html.Events as HE
@@ -12,6 +13,7 @@ import WsnParsers as Parsers exposing (Expression, Factor(..), Production, Synta
 
 type alias Model =
     { input : String
+    , parser : Maybe String
     , err : Maybe (List Parser.DeadEnd)
     , grammar : Maybe Syntax
     }
@@ -23,12 +25,23 @@ type Msg
 
 main : Program () Model Msg
 main =
-    Browser.element { init = \_ -> init, update = update, view = view, subscriptions = always Sub.none }
+    Browser.element
+        { init = \_ -> init
+        , update = update
+        , view = view
+        , subscriptions = always Sub.none
+        }
 
 
 init : ( Model, Cmd Msg )
 init =
-    ( Model "" Nothing Nothing, Cmd.none )
+    ( { input = ""
+      , parser = Nothing
+      , err = Nothing
+      , grammar = Nothing
+      }
+    , Cmd.none
+    )
 
 
 parse : Model -> Model
@@ -37,6 +50,7 @@ parse model =
         Ok grammer ->
             { model
                 | grammar = Just grammer
+                , parser = Just <| generate grammer
                 , err = Nothing
             }
 
@@ -72,6 +86,7 @@ view model =
             Just err ->
                 div [] <| List.map viewError err
         , div [] [ Maybe.map viewGrammar model.grammar |> Maybe.withDefault (text "no output") ]
+        , Html.pre [] [ Maybe.map text model.parser |> Maybe.withDefault (text "no cigar") ]
         ]
 
 
