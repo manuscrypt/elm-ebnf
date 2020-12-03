@@ -1,6 +1,6 @@
-module ExpressionTest exposing (validAlternationPass, validConcatenationPass, validGroupPass, validOptionPass, validOptionsPass, validRepetitionPass)
+module ExpressionTest exposing (validGroupPass, validOptionPass, validOptionsPass, validRepetitionPass)
 
-import Parsers exposing (..)
+import BnfParsers exposing (..)
 import Test exposing (..)
 import TestHelpers exposing (expectEqual, expectFail)
 
@@ -42,13 +42,12 @@ validGroupPass =
         \() -> expectEqual grp "( qwert )" <| Group [ RefId (Identifier "qwert") ]
 
 
-validAlternationPass : Test
-validAlternationPass =
-    test "valid alternation passes" <|
-        \() -> expectEqual alternation "'A' | 'B'" <| Alternation (Literal "A") (Literal "B")
 
-
-validConcatenationPass : Test
-validConcatenationPass =
-    test "valid concatenation passes" <|
-        \() -> expectEqual concatenation "'A' , 'B'" <| Concatenation (Literal "A") (Literal "B")
+-- validAlternationPass : Test
+-- validAlternationPass =
+--     test "valid alternation passes" <|
+--         \() -> expectEqual alternation "'A' | 'B'" <| Alternation (Literal "A") (Literal "B")
+-- validConcatenationPass : Test
+-- validConcatenationPass =
+--     test "valid concatenation passes" <|
+--         \() -> expectEqual concatenation "'A' , 'B'" <| Concatenation (Literal "A") (Literal "B")

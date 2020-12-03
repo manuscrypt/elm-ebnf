@@ -1,0 +1,35 @@
+(*
+This example defines Extended BNF
+informally. Many of the syntax rules include
+a comment to explain their meaning; inside a
+comment a meta identifier is enclosed in angle
+brackets < and > to avoid confusion with
+similar English words. The non-terminal symbols
+<letter>, <decimal digit> and <character> are
+not defined. The position of <comments> is
+stated in a comment but not formally defined.
+*)
+
+syntax = syntax rule, {syntax rule};
+syntax rule= meta identifier, ’=’, definitions list, ’;’
+definitions list = single definition, {’|’, single definition}
+single definition = term, {’,’, term}
+term = factor, [’-’, exception]
+exception = factor
+factor = [integer, ’*’], primary
+primary = optional sequence 
+        | repeated sequence 
+        | special sequence 
+        | grouped sequence 
+        | meta identifier 
+        | terminal string 
+        | empty;
+empty = ;
+optional sequence = ’[’, definitions list, ’]’
+repeated sequence = ’{’, definitions list, ’}’
+grouped sequence = ’(’, definitions list, ’)’
+terminal string
+= "’", character - "’", {character - "’"}, "’"
+| ’"’, character - ’"’, {character - ’"’}, ’"’
+(* A <terminal string> represents the
+<characters> between the quote symbols

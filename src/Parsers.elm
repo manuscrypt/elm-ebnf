@@ -1,36 +1,40 @@
-module Parsers exposing (Expression(..), Identifier(..), Production(..), Rhs(..), Syntax(..), alternation, anyString, concatenation, dLiteral, expression, grp, identifier, opt, production, rep, sLiteral, syntax)
+module Parsers exposing (..)
 
 --import Parser.Advanced as Parser exposing (..)
 
-import Parser exposing (..)
+import Parser exposing ((|.), (|=), Parser, Step(..), Trailing(..), backtrackable, chompIf, chompUntilEndOr, chompWhile, end, getChompedString, lazy, loop, map, oneOf, sequence, spaces, succeed, symbol, variable)
 import Set
-import Symbols exposing (..)
+import Symbols exposing (isCharacter, isDigit, isLetter, isLetterOrDigitOrUnderscore, isSymbol)
 
 
 type Syntax
     = Syntax (List Production)
 
 
-type Identifier
-    = Identifier String
+type alias Production =
+    { identifier : String
+    , expression : Expression
+    }
 
 
-type Production
-    = Production Identifier Rhs
+type alias Expression =
+    List Term
 
 
-type Expression
-    = RefId Identifier
+type alias Term =
+    List Factor
+
+
+type alias Identifier =
+    String
+
+
+type Factor
+    = Id String
     | Literal String
-    | Option (List Expression)
-    | Group (List Expression)
-    | Repetition (List Expression)
-
-
-type Rhs
-    = Alternation Expression Expression
-    | Concatenation Expression Expression
-    | Single Expression
+    | Repetition Expression
+    | Option Expression
+    | Group Expression
 
 
 syntax : Parser Syntax
@@ -45,6 +49,7 @@ productionsHelp revProductions =
     oneOf
         [ succeed (\prods -> Loop (prods :: revProductions))
             |= production
+            |. spaces
         , succeed ()
             |> map (\_ -> Done (List.reverse revProductions))
         ]
@@ -58,107 +63,116 @@ production =
         |. spaces
         |. symbol "="
         |. spaces
-        |= oneOf
-            [ succeed Single |= expression
-            , alternation
-            , concatenation
-            ]
+        |= expression
         |. spaces
-        |. oneOf [ symbol ".", symbol ";" ]
-        |. chompUntilEndOr "\n"
+        |. symbol "."
 
 
 expression : Parser Expression
 expression =
-    succeed identity
-        |= oneOf
-            [ succeed RefId |= identifier
-            , succeed Literal
-                |= oneOf [ sLiteral, dLiteral ]
-            , oneOf
-                [ opt
-                , grp
-                , rep
-                ]
-            ]
+    Parser.sequence
+        { start = ""
+        , separator = "|"
+        , end = ""
+        , spaces = spaces
+        , item = term
+        , trailing = Forbidden -- demand a trailing semi-colon
+        }
 
 
-concatenation : Parser Rhs
-concatenation =
-    succeed Concatenation
-        |. spaces
-        |= expression
-        |. spaces
-        |. symbol ","
-        |. spaces
-        |= expression
-        |. spaces
+
+-- expression : Parser Expression
+-- expression =
+--     loop [] terms
+-- terms : List Term -> Parser (Step (List Term) (List Term))
+-- terms revTerms =
+--     oneOf
+--         [ succeed (\t -> Loop (t :: revTerms))
+--             |= term
+--             |. symbol "|"
+--         , succeed (\t -> Loop (t :: revTerms))
+--             |= term
+--         , succeed ()
+--             |> map (\_ -> Done (List.reverse revTerms))
+--         ]
 
 
-alternation : Parser Rhs
-alternation =
-    succeed Alternation
-        |. spaces
-        |= expression
-        |. spaces
-        |. symbol "|"
-        |. spaces
-        |= expression
-        |. spaces
+term : Parser Term
+term =
+    loop [] factors
 
 
-opt : Parser Expression
-opt =
-    succeed Option
-        |= sequence { start = "[", separator = ",", end = "]", spaces = spaces, item = lazy (\_ -> expression), trailing = Optional }
+factors : List Factor -> Parser (Step (List Factor) (List Factor))
+factors revFactors =
+    oneOf
+        [ succeed (\f -> Loop (f :: revFactors))
+            |= factor
+        , succeed ()
+            |> map (\_ -> Done (List.reverse revFactors))
+        ]
 
 
-grp : Parser Expression
-grp =
-    succeed Group
-        |= sequence { start = "(", separator = ",", end = ")", spaces = spaces, item = lazy (\_ -> expression), trailing = Optional }
+factor : Parser Factor
+factor =
+    oneOf [ id, literal, repetition, option, group ]
 
 
-rep : Parser Expression
-rep =
+repetition : Parser Factor
+repetition =
     succeed Repetition
-        |= sequence { start = "{", separator = ",", end = "}", spaces = spaces, item = lazy (\_ -> expression), trailing = Optional }
+        |. spaces
+        |. symbol "{"
+        |. spaces
+        |= expression
+        |. spaces
+        |. symbol "}"
+        |. spaces
+
+
+option : Parser Factor
+option =
+    succeed Option
+        |. spaces
+        |. symbol "["
+        |. spaces
+        |= expression
+        |. spaces
+        |. symbol "]"
+        |. spaces
+
+
+group : Parser Factor
+group =
+    succeed Group
+        |. spaces
+        |. symbol "("
+        |. spaces
+        |= expression
+        |. spaces
+        |. symbol ")"
+        |. spaces
+
+
+id : Parser Factor
+id =
+    succeed Id |= identifier
 
 
 identifier : Parser Identifier
 identifier =
-    succeed Identifier
+    succeed identity
+        |. spaces
         |= variable { start = isLetter, inner = isLetterOrDigitOrUnderscore, reserved = Set.empty }
+        |. spaces
 
 
-sLiteral : Parser String
-sLiteral =
-    succeed identity |. symbol "'" |= anyString |. symbol "'"
-
-
-dLiteral : Parser String
-dLiteral =
-    succeed identity |. symbol "\"" |= anyString |. symbol "\""
-
-
-anyString : Parser String
-anyString =
-    oneOf
-        [ chompIf (\c -> c == '\'') |> getChompedString
-        , chompIf (\c -> c == '"') |> getChompedString
-        , variable { start = isCharacter, inner = isCharacter, reserved = Set.empty }
-        ]
-
-
-
--- oneOf
---     [ symbol "\"" |. chompUntil "\"" |> getChompedString
---     , symbol "'" |. chompUntil "'" |> getChompedString
---     , variable { start = isCharacter, inner = isCharacter, reserved = Set.empty }
---     ]
---
--- delayedCommit spaces <|
---     succeed identity
---         |. symbol "|"
---         |. spaces
---         |= lazy (\_ -> term)
+literal : Parser Factor
+literal =
+    succeed Literal
+        |. spaces
+        |. symbol "\""
+        |. spaces
+        |= variable { start = isCharacter, inner = isCharacter, reserved = Set.empty }
+        |. spaces
+        |. symbol "\""
+        |. spaces

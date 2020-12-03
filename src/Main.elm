@@ -1,11 +1,13 @@
 module Main exposing (Model, Msg(..), init, main, parse, update, view, viewError, viewExpression, viewGrammar, viewProblem, viewRule)
 
+-- import BnfParsers as Parsers exposing (..)
+
 import Browser
 import Html exposing (Html, div, input, text)
 import Html.Attributes as HA exposing (type_, value)
 import Html.Events as HE
 import Parser exposing (..)
-import Parsers exposing (..)
+import Parsers as Parsers exposing (..)
 
 
 type alias Model =
@@ -79,18 +81,39 @@ viewGrammar (Syntax productions) =
 
 
 viewRule : Production -> Html Msg
-viewRule (Production factor expression) =
-    div [] [ text <| Debug.toString factor ++ " = " ++ Debug.toString expression ++ ";" ]
+viewRule { identifier, expression } =
+    div [] [ text <| identifier ++ " = " ++ Debug.toString expression ++ ";" ]
 
 
 viewExpression : Expression -> Html msg
 viewExpression exp =
-    case exp of
-        RefId (Identifier name) ->
-            div [] [ text <| "Identifier: " ++ name ]
+    div [] <| List.map viewTerm exp
 
-        _ ->
-            div [] [ text <| "Not implemented" ]
+
+viewTerm : Term -> Html msg
+viewTerm term =
+    div [] <| List.map viewFactor term
+
+
+viewFactor : Factor -> Html msg
+viewFactor f =
+    div [] <|
+        [ case f of
+            Id id ->
+                Html.span [] [ text <| "id(" ++ id ++ ")" ]
+
+            Literal lit ->
+                Html.span [] [ text <| "lit(" ++ lit ++ ")" ]
+
+            Repetition rep ->
+                Html.span [] [ text <| "repetition" ]
+
+            Option opt ->
+                Html.span [] [ text <| "option" ]
+
+            Group grp ->
+                Html.span [] [ text <| "grouping" ]
+        ]
 
 
 viewError : Parser.DeadEnd -> Html msg
